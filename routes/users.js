@@ -83,5 +83,29 @@ router.get('/me', verifyToken, (req, res) => {
   res.json({ message: `Hello, ${req.user.name}`, user: req.user });
 });
 
+// Search users by name (exclude self, name param optional)
+router.get('/search', verifyToken, async (req, res) => {
+  const { name } = req.query;
+  const userId = req.user.id;
+  try {
+    let result;
+    if (name) {
+      result = await pool.query(
+        `SELECT id, name, email, rating, profile_image FROM users WHERE LOWER(name) LIKE LOWER($1) AND id != $2`,
+        [`%${name}%`, userId]
+      );
+    } else {
+      result = await pool.query(
+        `SELECT id, name, email, rating, profile_image FROM users WHERE id != $1`,
+        [userId]
+      );
+    }
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error searching user' });
+  }
+});
+
 
 module.exports = router;

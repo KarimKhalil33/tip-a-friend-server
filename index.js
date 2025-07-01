@@ -11,8 +11,8 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 
-const { connectProducer } = require('./utils/kafka');
-connectProducer();
+//const { connectProducer } = require('./utils/kafka');
+//connectProducer();
 
 
 const userRoutes = require('./routes/users');
@@ -42,6 +42,6 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Server running on http://localhost:${PORT}`);
 });

@@ -154,5 +154,50 @@ router.post('/confirm/:id', verifyToken, async (req, res) => {
   res.status(200).json({ message: 'Task confirmed by requester.' });
 });
 
+// Edit a post (only by owner)
+router.put('/:id', verifyToken, async (req, res) => {
+  const userId = req.user.id;
+  const requestId = req.params.id;
+  const { type, category, title, description, location, price, time } = req.body;
+
+  // Check ownership
+  const { rows } = await pool.query('SELECT user_id FROM requests WHERE id = $1', [requestId]);
+  if (!rows.length || rows[0].user_id !== userId) {
+    return res.status(403).json({ error: 'Not authorized to edit this post.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE requests SET type = $1, category = $2, title = $3, description = $4, location = $5, price = $6, time = $7
+       WHERE id = $8 RETURNING *`,
+      [type, category, title, description, location, price, time, requestId]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error editing post' });
+  }
+});
+
+// Delete a post (only by owner)
+router.delete('/:id', verifyToken, async (req, res) => {
+  const userId = req.user.id;
+  const requestId = req.params.id;
+
+  // Check ownership
+  const { rows } = await pool.query('SELECT user_id FROM requests WHERE id = $1', [requestId]);
+  if (!rows.length || rows[0].user_id !== userId) {
+    return res.status(403).json({ error: 'Not authorized to delete this post.' });
+  }
+
+  try {
+    await pool.query('DELETE FROM requests WHERE id = $1', [requestId]);
+    res.json({ message: 'Post deleted successfully.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error deleting post' });
+  }
+});
+
 
 module.exports = router;

@@ -74,4 +74,40 @@ router.get('/list', verifyToken, async (req, res) => {
   }
 });
 
+// Get all pending friend requests sent by the user
+router.get('/sent-requests', verifyToken, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const result = await pool.query(
+      `SELECT u.id, u.name, u.email, u.profile_image, f.created_at
+       FROM friends f
+       JOIN users u ON f.friend_id = u.id
+       WHERE f.user_id = $1 AND f.status = 'pending'`,
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error retrieving sent requests' });
+  }
+});
+
+// Get all pending friend requests received by the user
+router.get('/received-requests', verifyToken, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const result = await pool.query(
+      `SELECT u.id, u.name, u.email, u.profile_image, f.created_at
+       FROM friends f
+       JOIN users u ON f.user_id = u.id
+       WHERE f.friend_id = $1 AND f.status = 'pending'`,
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error retrieving received requests' });
+  }
+});
+
 module.exports = router;
